@@ -1,0 +1,1392 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Puzzle Box</title>
+<meta name="theme-color" content="#faf6f0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Puzzle Box">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{--bg:#faf6f0;--card:#fff;--ink:#2a2623;--mut:#7a716a;--line:#e6ded3;--ac:#e8743b;--ok:#2f9e6b;--bad:#d64545;--cell:#f3ede4;--cellb:#d9cfc1;--selbg:#ffe9c7;--rl:80%;--shadow:0 1px 2px rgba(0,0,0,.05),0 6px 16px rgba(0,0,0,.05)}
+:root[data-theme=dark]{--bg:#15120f;--card:#211d18;--ink:#f3ece4;--mut:#a39a90;--line:#3a342c;--cell:#2b261f;--cellb:#4a4237;--selbg:#4a3a1c;--rl:36%;--shadow:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]):not([data-theme=dark]){--bg:#15120f;--card:#211d18;--ink:#f3ece4;--mut:#a39a90;--line:#3a342c;--cell:#2b261f;--cellb:#4a4237;--selbg:#4a3a1c;--rl:36%;--shadow:none}}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--ink);font:16px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;overscroll-behavior-y:none;touch-action:manipulation}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+#app{max-width:520px;margin:0 auto;min-height:100dvh;padding:calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 24px)}
+h1{font-size:28px;margin:0;letter-spacing:-.02em}
+h2{font-size:22px;margin:0}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.top .grow{flex:1;min-width:0}
+.ttl{font-weight:800;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{font-size:13px;color:var(--mut)}
+.iconbtn{width:42px;height:42px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-size:18px;flex:none}
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 2px}
+.pill{display:inline-flex;gap:6px;align-items:center;padding:6px 11px;border-radius:99px;background:var(--card);border:1px solid var(--line);font-size:14px}
+.sec{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--mut);margin:20px 2px 8px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gcard{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--ac);border-radius:18px;padding:13px 14px;text-align:left;box-shadow:var(--shadow);position:relative;min-height:104px;display:flex;flex-direction:column;gap:2px}
+.gcard .em{font-size:30px;line-height:1.1}
+.gcard .nm{font-weight:800}
+.gcard .sb{font-size:12.5px;color:var(--mut)}
+.gcard .tag{position:absolute;top:10px;right:10px;font-size:11px;font-weight:700;background:var(--ac);color:#fff;border-radius:99px;padding:2px 8px}
+.gcard.done{opacity:.75}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.btn{padding:13px 16px;border-radius:14px;border:0;background:var(--ac);color:#fff;font-weight:800;font-size:16px}
+.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:8px 12px;font-size:14px;border-radius:12px}
+.btn:disabled{opacity:.45}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:10px 15px;border-radius:99px;border:1px solid var(--line);background:var(--card);font-weight:600}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0}
+.rules{font-size:14px;color:var(--mut);line-height:1.45}
+.lbl{font-size:13px;font-weight:700;color:var(--mut);margin:16px 0 8px}
+.loading{text-align:center;padding:80px 0;color:var(--mut)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+td.r,th.r{text-align:right}
+select,textarea{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;width:100%;-webkit-user-select:text;user-select:text}
+textarea{min-height:90px;font-size:12px}
+
+/* play shell */
+.ptop{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.timer{font-variant-numeric:tabular-nums;font-weight:800;font-size:18px;min-width:52px;text-align:right}
+.bwrap{position:relative}
+.cover{position:absolute;inset:-4px;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:20;border-radius:16px;font-weight:800;border:2px dashed var(--line);color:var(--mut);text-align:center;padding:20px}
+.acts{display:flex;gap:8px;margin-top:16px;justify-content:center;flex-wrap:wrap}
+.acts button{flex:1;min-width:76px;padding:12px 8px;border-radius:14px;border:1px solid var(--line);background:var(--card);font-weight:700;font-size:15px}
+.acts button:disabled{opacity:.4}
+.info{text-align:center;color:var(--mut);font-size:14px;margin-bottom:10px;font-variant-numeric:tabular-nums}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:60;padding:20px}
+.modal .mb{background:var(--card);border-radius:24px;padding:24px 22px;width:100%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.modal .big{font-size:46px}
+.modal .stat{font-size:34px;font-weight:800;margin:4px 0}
+.modal .badge{display:inline-block;background:var(--ac);color:#fff;border-radius:99px;padding:3px 12px;font-weight:800;font-size:13px;margin:4px 0}
+.modal .row{margin-top:18px}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 26px);transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:14px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:80;max-width:88vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* boards */
+.bd{--bw:min(calc(100vw - 28px),460px);width:var(--bw);margin:0 auto;display:grid;grid-template-columns:repeat(var(--n),1fr)}
+.tgrid{gap:4px}
+.tcell{aspect-ratio:1;border-radius:10px;border:1px solid var(--cellb);background:var(--cell);position:relative;font-size:calc(var(--bw)/var(--n)*.5);padding:0;line-height:1;display:flex;align-items:center;justify-content:center}
+.tcell.given{background:var(--cellb)}
+.tcell.bad{outline:3px solid var(--bad);outline-offset:-2px}
+.edge{position:absolute;z-index:3;width:20px;height:20px;border-radius:50%;background:var(--card);border:1px solid var(--cellb);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;pointer-events:none;color:var(--ink)}
+.edge.h{right:-12px;top:50%;margin-top:-10px}
+.edge.v{bottom:-12px;left:50%;margin-left:-10px}
+
+.mgrid{gap:4px}
+.mcard{aspect-ratio:1;border-radius:8px;border:0;padding:0;background:var(--ac);color:#fff;font-size:calc(var(--bw)/var(--n)*.55);line-height:1;display:flex;align-items:center;justify-content:center;transition:transform .12s}
+.mcard::before{content:"✦";font-size:.6em;opacity:.5}
+.mcard span{display:none}
+.mcard.up,.mcard.match{background:var(--card);border:1px solid var(--line)}
+.mcard.up::before,.mcard.match::before{content:none}
+.mcard.up span,.mcard.match span{display:block}
+.mcard.match{opacity:.4}
+.mcard.up{transform:scale(1.04)}
+
+.wgrid{padding:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;touch-action:none}
+.wcell{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--bw)/var(--n)*.46);border-radius:8px}
+.wcell.f{background:var(--fc)}
+.wcell.sel{background:var(--ac);color:#fff}
+.wcell.hint{outline:3px solid var(--ac);outline-offset:-3px}
+.wcell.no{background:var(--bad);color:#fff}
+.wlist{display:flex;flex-wrap:wrap;gap:6px;margin:14px auto 0;justify-content:center;max-width:460px}
+.wword{padding:5px 11px;border-radius:99px;border:1px solid var(--line);background:var(--card);font-size:14px;font-weight:700}
+.wword.f{text-decoration:line-through;opacity:.45}
+
+.qgrid{border:3px solid var(--ink);border-radius:8px;overflow:hidden}
+.qcell{aspect-ratio:1;padding:0;border-style:solid;background:hsl(var(--h) 65% var(--rl));font-size:calc(var(--bw)/var(--n)*.52);line-height:1;display:flex;align-items:center;justify-content:center;position:relative}
+.qcell .x{font-size:.55em;opacity:.55;font-weight:800}
+.qcell.bad{box-shadow:inset 0 0 0 4px var(--bad)}
+
+.sgrid{border:3px solid var(--ink);border-radius:8px;overflow:hidden;background:var(--card)}
+.scell{aspect-ratio:1;border:0;border-style:solid;border-color:var(--line);background:var(--card);padding:0;font-size:calc(var(--bw)/var(--n)*.52);font-weight:600;display:flex;align-items:center;justify-content:center;line-height:1}
+.scell.given{font-weight:800}
+.scell.user{color:var(--ac)}
+.scell.same{background:var(--selbg)}
+.scell.sel{background:var(--ac);color:#fff}
+.scell.err{color:var(--bad)}
+.scell.wrong{background:var(--bad);color:#fff}
+.notes{display:grid;grid-template-columns:repeat(3,1fr);width:100%;height:100%;font-size:calc(var(--bw)/var(--n)*.2);color:var(--mut);align-items:center;justify-items:center;padding:2px;font-weight:700}
+.pad{display:flex;gap:6px;margin:14px auto 0;max-width:460px}
+.pad button{flex:1;height:54px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:22px;font-weight:700;padding:0}
+.pad button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.pad button.sm{font-size:17px}
+
+.zgrid{position:relative;border:2px solid var(--ink);border-radius:12px;overflow:hidden;background:var(--card);touch-action:none}
+.zcell{aspect-ratio:1;border:1px solid var(--line);position:relative}
+.zcell.on{background:color-mix(in srgb,var(--ac) 20%,transparent)}
+.zsvg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.znum{position:absolute;inset:20%;border-radius:50%;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:800;z-index:3;font-size:calc(var(--bw)/var(--n)*.34);pointer-events:none}
+.znum.hit{background:var(--ac);color:#fff}
+
+/* daily */
+.dgrid{--bw:min(calc(100vw - 28px),460px);width:var(--bw);margin:12px auto 0;display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.dtile{aspect-ratio:1;border-radius:8px;border:2px solid transparent;padding:0;background:linear-gradient(160deg,#9a7653,#6f5238);font-size:calc(var(--bw)/8*.52);line-height:1;display:flex;align-items:center;justify-content:center;color:#fff}
+.dtile:disabled{cursor:default}
+.dtile.rev{background:var(--card);border-color:var(--tc,var(--line))}
+.dtile.ghost{opacity:.35}
+.dstat{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.dstat div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 4px;text-align:center}
+.dstat b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.dstat span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.pouch{min-height:34px;display:flex;flex-wrap:wrap;gap:4px;font-size:22px;align-items:center}
+.msg{text-align:center;font-weight:700;min-height:24px;margin-top:10px}
+.oddsbox{display:flex;align-items:center;justify-content:center;gap:14px;margin:18px 0}
+.ocard{width:42%;max-width:170px;aspect-ratio:3/4;border-radius:22px;background:var(--card);border:2px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:58px;font-weight:800;font-variant-numeric:tabular-nums;box-shadow:var(--shadow)}
+.ocard small{font-size:12px;color:var(--mut);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.ocard.ok{border-color:var(--ok);color:var(--ok)}
+.ocard.no{border-color:var(--bad);color:var(--bad)}
+.ocard.q{color:var(--mut)}
+.bets{display:flex;gap:10px}
+.bets button{flex:1;padding:14px 8px;border-radius:16px;border:0;background:var(--ac);color:#fff;font-weight:800;font-size:18px;line-height:1.25}
+.bets button small{display:block;font-size:13px;font-weight:600;opacity:.9}
+.bets button.lo{background:#4a6fd8}
+.trail{display:flex;gap:4px;justify-content:center;margin:12px 0;font-size:18px;flex-wrap:wrap}
+.book{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.bi{background:var(--card);border:2px solid var(--tc);border-radius:14px;text-align:center;padding:8px 2px;font-size:26px;line-height:1.1}
+.bi small{display:block;font-size:10.5px;color:var(--mut);font-weight:700;margin-top:3px;line-height:1.15}
+.bi.lock{opacity:.35;border-style:dashed}
+
+</style>
+</head><body>
+<div id="app"><main id="view"></main></div>
+<div id="toast"></div>
+<script>
+'use strict';
+/* ===== Pure generators (no DOM) ===== */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hashStr(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19}h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return(h^h>>>16)>>>0}
+function shuffle(a,rnd){rnd=rnd||Math.random;for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function rint(n,rnd){return Math.floor((rnd||Math.random)()*n)}
+function range(n){return Array.from({length:n},(_,i)=>i)}
+
+/* ---------- TANGO ---------- */
+function tangoSearch(n,giv,edges,limit,cap,rnd){
+  const N=n*n,half=n/2,g=giv.slice(),fixed=giv.map(v=>v>=0);
+  const rc=[],cc=[];for(let i=0;i<n;i++){rc.push([0,0]);cc.push([0,0])}
+  for(let i=0;i<N;i++)if(g[i]>=0){rc[(i/n)|0][g[i]]++;cc[i%n][g[i]]++}
+  const E=Array.from({length:N},()=>[]);
+  for(const e of edges){E[e.a].push([e.b,e.t]);E[e.b].push([e.a,e.t])}
+  let count=0,nodes=0,sol=null,capped=false;
+  function ok(idx,v){
+    const i=(idx/n)|0,j=idx%n;
+    if(j>=2&&g[idx-1]===v&&g[idx-2]===v)return false;
+    if(j>=1&&j<n-1&&g[idx-1]===v&&g[idx+1]===v)return false;
+    if(j<n-2&&g[idx+1]===v&&g[idx+2]===v)return false;
+    if(i>=2&&g[idx-n]===v&&g[idx-2*n]===v)return false;
+    if(i>=1&&i<n-1&&g[idx-n]===v&&g[idx+n]===v)return false;
+    if(i<n-2&&g[idx+n]===v&&g[idx+2*n]===v)return false;
+    for(const [o,t] of E[idx]){const w=g[o];if(w>=0&&((t==='=')?w!==v:w===v))return false}
+    return true;
+  }
+  function dfs(idx){
+    if(count>=limit||capped)return;
+    while(idx<N&&fixed[idx])idx++;
+    if(idx===N){count++;if(!sol)sol=g.slice();return}
+    if(++nodes>cap){capped=true;return}
+    const i=(idx/n)|0,j=idx%n;
+    const order=(rnd&&rnd()<.5)?[1,0]:[0,1];
+    for(const v of order){
+      if(rc[i][v]<half&&cc[j][v]<half&&ok(idx,v)){
+        g[idx]=v;rc[i][v]++;cc[j][v]++;
+        dfs(idx+1);
+        rc[i][v]--;cc[j][v]--;g[idx]=-1;
+        if(count>=limit||capped)return;
+      }
+    }
+  }
+  dfs(0);
+  return{count,sol,capped};
+}
+function tangoGen(n,diff){
+  const N=n*n;
+  for(let tries=0;tries<30;tries++){
+    const r=tangoSearch(n,new Array(N).fill(-1),[],1,500000,Math.random);
+    if(!r.sol)continue;
+    const sol=r.sol,items=[];
+    for(let i=0;i<N;i++)items.push({k:'g',i});
+    for(let i=0;i<n;i++)for(let j=0;j<n;j++){
+      const a=i*n+j;
+      if(j<n-1)items.push({k:'e',a,b:a+1,t:sol[a]===sol[a+1]?'=':'x'});
+      if(i<n-1)items.push({k:'e',a,b:a+n,t:sol[a]===sol[a+n]?'=':'x'});
+    }
+    shuffle(items);
+    const target=diff==='easy'?Math.round(N*0.62):0;
+    let cur=items.slice();
+    for(const it of items){
+      if(cur.length<=target)break;
+      const trial=cur.filter(x=>x!==it);
+      const giv=new Array(N).fill(-1);const ed=[];
+      for(const x of trial){if(x.k==='g')giv[x.i]=sol[x.i];else ed.push({a:x.a,b:x.b,t:x.t})}
+      const r2=tangoSearch(n,giv,ed,2,20000,null);
+      if(r2.count===1&&!r2.capped)cur=trial;
+    }
+    const given=new Array(N).fill(0),cells=new Array(N).fill(-1),edges=[];
+    for(const x of cur){if(x.k==='g'){given[x.i]=1;cells[x.i]=sol[x.i]}else edges.push({a:x.a,b:x.b,t:x.t})}
+    return{n,sol,given,cells,edges,hist:[],moves:0};
+  }
+  return null;
+}
+
+/* ---------- QUEENS ---------- */
+function queensCount(n,reg,limit){
+  let count=0;const usedC=new Array(n).fill(false),usedR=new Array(n).fill(false);
+  function rec(r,prev){
+    if(count>=limit)return;
+    if(r===n){count++;return}
+    for(let c=0;c<n;c++){
+      if(usedC[c]||(prev>=0&&Math.abs(c-prev)<2))continue;
+      const g=reg[r*n+c];if(usedR[g])continue;
+      usedC[c]=usedR[g]=true;rec(r+1,c);usedC[c]=usedR[g]=false;
+      if(count>=limit)return;
+    }
+  }
+  rec(0,-1);return count;
+}
+function queensGen(n){
+  for(let att=0;att<40000;att++){
+    const cols=[],used=new Array(n).fill(false);
+    const place=r=>{
+      if(r===n)return true;
+      for(const c of shuffle(range(n))){
+        if(used[c]||(r>0&&Math.abs(c-cols[r-1])<2))continue;
+        used[c]=true;cols[r]=c;if(place(r+1))return true;used[c]=false;
+      }
+      return false;
+    };
+    if(!place(0))continue;
+    const reg=new Array(n*n).fill(-1),ids=shuffle(range(n));
+    for(let r=0;r<n;r++)reg[r*n+cols[r]]=ids[r];
+    let left=n*n-n;
+    while(left>0){
+      const cand=[];
+      for(let i=0;i<n*n;i++){
+        if(reg[i]!==-1)continue;
+        const r=(i/n)|0,c=i%n;
+        if(r>0&&reg[i-n]>=0)cand.push([i,reg[i-n]]);
+        if(r<n-1&&reg[i+n]>=0)cand.push([i,reg[i+n]]);
+        if(c>0&&reg[i-1]>=0)cand.push([i,reg[i-1]]);
+        if(c<n-1&&reg[i+1]>=0)cand.push([i,reg[i+1]]);
+      }
+      const [i,g]=cand[rint(cand.length)];reg[i]=g;left--;
+    }
+    let c=queensCount(n,reg,40);
+    for(let mv=0;mv<400&&c>1;mv++){
+      const i=rint(n*n);
+      if(i%n===cols[(i/n)|0])continue;
+      const r=(i/n)|0,cc=i%n,old=reg[i],nb=[];
+      if(r>0&&reg[i-n]!==old)nb.push(reg[i-n]);if(r<n-1&&reg[i+n]!==old)nb.push(reg[i+n]);
+      if(cc>0&&reg[i-1]!==old)nb.push(reg[i-1]);if(cc<n-1&&reg[i+1]!==old)nb.push(reg[i+1]);
+      if(!nb.length)continue;
+      reg[i]=nb[rint(nb.length)];
+      if(!regionConnected(n,reg,old,cols)){reg[i]=old;continue}
+      const c2=queensCount(n,reg,40);
+      if(c2<=c)c=c2;else reg[i]=old;
+    }
+    if(c===1)return{n,reg,sol:cols.slice(),marks:new Array(n*n).fill(0),hist:[],moves:0};
+  }
+  return null;
+}
+function regionConnected(n,reg,id,cols){
+  let total=0,start=-1;
+  for(let i=0;i<n*n;i++)if(reg[i]===id){total++;if(i%n===cols[(i/n)|0])start=i}
+  if(start<0)return false;
+  const seen=new Set([start]),q=[start];
+  while(q.length){
+    const i=q.pop(),r=(i/n)|0,c=i%n;
+    for(const j of [r>0?i-n:-1,r<n-1?i+n:-1,c>0?i-1:-1,c<n-1?i+1:-1]){
+      if(j>=0&&reg[j]===id&&!seen.has(j)){seen.add(j);q.push(j)}
+    }
+  }
+  return seen.size===total;
+}
+
+/* ---------- MINI SUDOKU ---------- */
+function sudokuDims(n){return n===4?{bh:2,bw:2}:{bh:2,bw:3}}
+function sudokuSolve(n,grid,limit,rnd){
+  const {bh,bw}=sudokuDims(n),g=grid.slice(),full=(1<<n)-1;
+  const row=new Array(n).fill(0),col=new Array(n).fill(0),box=new Array(n).fill(0);
+  const bo=(r,c)=>Math.floor(r/bh)*(n/bw)+Math.floor(c/bw);
+  for(let i=0;i<n*n;i++)if(g[i]){const r=(i/n)|0,c=i%n,b=1<<(g[i]-1);row[r]|=b;col[c]|=b;box[bo(r,c)]|=b}
+  let count=0,sol=null;
+  const pc=m=>{let k=0;while(m){m&=m-1;k++}return k};
+  function rec(){
+    if(count>=limit)return;
+    let best=-1,bm=0,bc=99;
+    for(let i=0;i<n*n;i++){
+      if(g[i])continue;
+      const r=(i/n)|0,c=i%n,m=full&~(row[r]|col[c]|box[bo(r,c)]),k=pc(m);
+      if(k<bc){bc=k;best=i;bm=m;if(k<=1)break}
+    }
+    if(best<0){count++;if(!sol)sol=g.slice();return}
+    if(bc===0)return;
+    const r=(best/n)|0,c=best%n,b=bo(r,c);
+    const ds=range(n).filter(d=>bm>>d&1);
+    if(rnd)shuffle(ds,rnd);
+    for(const d of ds){
+      const bit=1<<d;g[best]=d+1;row[r]|=bit;col[c]|=bit;box[b]|=bit;
+      rec();
+      g[best]=0;row[r]&=~bit;col[c]&=~bit;box[b]&=~bit;
+      if(count>=limit)return;
+    }
+  }
+  rec();return{count,sol};
+}
+function sudokuGen(n,diff){
+  const T={4:{easy:10,medium:8,hard:6},6:{easy:22,medium:18,hard:14}}[n][diff];
+  const sol=sudokuSolve(n,new Array(n*n).fill(0),1,Math.random).sol;
+  const g=sol.slice();let givens=n*n;
+  for(const p of shuffle(range(n*n))){
+    if(givens<=T)break;
+    const v=g[p];g[p]=0;
+    if(sudokuSolve(n,g,2).count===1)givens--;else g[p]=v;
+  }
+  return{n,sol,given:g.map(v=>v?1:0),cells:g.slice(),notes:new Array(n*n).fill(0),sel:-1,hist:[],moves:0,noteMode:false};
+}
+
+/* ---------- ZIP ---------- */
+function hamPath(n){
+  const N=n*n;let p=[];
+  for(let r=0;r<n;r++){if(r%2===0)for(let c=0;c<n;c++)p.push(r*n+c);else for(let c=n-1;c>=0;c--)p.push(r*n+c)}
+  const pos=new Array(N);const idx=()=>{for(let i=0;i<N;i++)pos[p[i]]=i};idx();
+  for(let t=0;t<N*40;t++){
+    if(Math.random()<.5){p.reverse();idx()}
+    const head=p[N-1],r=(head/n)|0,c=head%n,nb=[];
+    if(r>0)nb.push(head-n);if(r<n-1)nb.push(head+n);if(c>0)nb.push(head-1);if(c<n-1)nb.push(head+1);
+    const q=nb[rint(nb.length)],j=pos[q];
+    if(j===N-2)continue;
+    const seg=p.splice(j+1).reverse();p=p.concat(seg);idx();
+  }
+  return p;
+}
+function zipGen(n,diff){
+  const N=n*n,K=diff==='easy'?n+3:n;
+  const sol=hamPath(n);
+  const marks=[0];
+  for(let k=1;k<K-1;k++){
+    let p=Math.round(k*(N-1)/(K-1))+rint(3)-1;
+    p=Math.max(marks[marks.length-1]+1,Math.min(N-2-(K-2-k),p));
+    marks.push(p);
+  }
+  marks.push(N-1);
+  const nums={};marks.forEach((p,i)=>nums[sol[p]]=i+1);
+  return{n,sol,nums,K,path:[],hist:[],moves:0};
+}
+
+/* ---------- WORD SEARCH ---------- */
+const WORDS=('tiger zebra horse sheep koala panda otter eagle whale shark camel llama moose rabbit monkey donkey turtle falcon parrot badger beaver walrus dolphin penguin giraffe '+
+'river ocean forest desert island valley meadow canyon glacier volcano thunder breeze sunset rainbow blossom pebble waves cloud storm planet comet galaxy orbit meteor '+
+'apple mango lemon peach grape melon berry bread honey pasta pizza salad butter cheese carrot potato tomato onion garlic pepper cookie noodle waffle pretzel '+
+'table chair sofa lamp pillow blanket window door mirror garden kitchen bridge tower castle '+
+'pencil marker ruler paper book bottle basket ticket pocket button zipper candle ribbon helmet guitar piano drum trumpet violin flute '+
+'jump swim climb dance laugh smile whisper wander gather travel puzzle jungle silver golden bright gentle quiet clever brave happy lucky sunny frozen '+
+'rocket engine wheel anchor harbor lantern compass journey voyage mystery secret treasure '+
+'cactus maple willow daisy tulip orchid clover fern moss acorn feather shell coral pearl amber crystal marble copper iron velvet cotton wool '+
+'soccer tennis hockey cricket rugby karate yoga chess cards marble kite swing slide picnic camp trail summit cliff cave '+
+'violet orange yellow purple green brown pink black white gray indigo crimson scarlet teal '+
+'north south east west spring summer autumn winter morning evening midnight noon').split(/\s+/).map(w=>w.toUpperCase()).filter((w,i,a)=>w.length>=4&&a.indexOf(w)===i);
+function wordsGen(n,diff){
+  const cnt={8:6,10:8,12:10}[n],maxLen=n===8?7:n===10?8:9;
+  const dirs=diff==='easy'?[[0,1],[1,0]]:[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]];
+  const rev=s=>s.split('').reverse().join('');
+  for(let att=0;att<100;att++){
+    const pool=shuffle(WORDS.filter(w=>w.length<=maxLen));
+    const grid=new Array(n*n).fill(''),words=[],placed={};
+    for(const w of pool){
+      if(words.length>=cnt)break;
+      if(words.some(x=>x.includes(w)||w.includes(x)||rev(x).includes(w)||w.includes(rev(x))))continue;
+      for(let t=0;t<80;t++){
+        const [dr,dc]=dirs[rint(dirs.length)],r=rint(n),c=rint(n);
+        const er=r+dr*(w.length-1),ec=c+dc*(w.length-1);
+        if(er<0||er>=n||ec<0||ec>=n)continue;
+        let fits=true;
+        for(let k=0;k<w.length;k++){const cur=grid[(r+dr*k)*n+c+dc*k];if(cur&&cur!==w[k]){fits=false;break}}
+        if(!fits)continue;
+        for(let k=0;k<w.length;k++)grid[(r+dr*k)*n+c+dc*k]=w[k];
+        placed[w]={r,c,dr,dc};words.push(w);break;
+      }
+    }
+    if(words.length<cnt)continue;
+    const L='ABCDEFGHIJKLMNOPRSTUWYEAIOT';
+    for(let i=0;i<n*n;i++)if(!grid[i])grid[i]=L[rint(L.length)];
+    return{n,grid,words:words.slice().sort(),placed,found:{},moves:0};
+  }
+  return null;
+}
+
+/* ---------- DAILY: Dig + Odds data ---------- */
+const TIERS=[
+  {k:'common',name:'Common',pts:1,col:'#8a8f98'},
+  {k:'uncommon',name:'Uncommon',pts:3,col:'#2fa36b'},
+  {k:'rare',name:'Rare',pts:8,col:'#3b82f6'},
+  {k:'epic',name:'Epic',pts:20,col:'#a855f7'},
+  {k:'legendary',name:'Legendary',pts:50,col:'#f59e0b'}
+];
+const ITEMS=[
+  [0,'🪨','Pebble'],[0,'🪵','Driftwood'],[0,'🦴','Old Bone'],[0,'🐚','Seashell'],[0,'🍂','Fossil Leaf'],
+  [0,'🧱','Brick Chunk'],[0,'🔩','Rusty Bolt'],[0,'🥄','Bent Spoon'],[0,'🧦','Lost Sock'],[0,'🕯️','Candle Stub'],
+  [1,'🪙','Old Coin'],[1,'🔑','Brass Key'],[1,'🧭','Compass'],[1,'🍄','Cave Mushroom'],[1,'🏺','Clay Jar'],
+  [1,'🔔','Tiny Bell'],[1,'🪞','Hand Mirror'],[1,'📜','Torn Map'],[1,'🧲','Magnet'],[1,'🪶','Gold Feather'],
+  [2,'🔮','Crystal Ball'],[2,'🗡️','Old Dagger'],[2,'👑','Tin Crown'],[2,'🧿','Lucky Eye'],
+  [2,'📿','Amber Beads'],[2,'🦋','Glass Butterfly'],[2,'🎻','Buried Fiddle'],[2,'🪄','Wand'],
+  [3,'🏆','Golden Trophy'],[3,'💍','Ruby Ring'],[3,'🥚','Dragon Egg'],[3,'🪐','Tiny Planet'],[3,'🌠','Fallen Star'],[3,'🎭','Ancient Mask'],
+  [4,'💎','Deep Diamond'],[4,'🦄','Unicorn Idol'],[4,'🔱','Sunken Trident'],[4,'🪔','Genie Lamp']
+].map((a,i)=>({id:i,tier:a[0],emoji:a[1],name:a[2]}));
+function digBoard(date,luck){
+  const rnd=mulberry32(hashStr('dig|'+date));
+  const types=[];
+  const add=(t,n,extra)=>{for(let i=0;i<n;i++)types.push(Object.assign({t},extra||{}))};
+  add('e',16);add('trap',9);add('pick',3);add('shield',2);
+  [16,9,5,3,1].forEach((n,tier)=>add('loot',n,{tier}));
+  shuffle(types,rnd);
+  let conv=luck*2;
+  return types.map(x=>{
+    const tile=Object.assign({},x);
+    if(tile.t==='e'&&conv>0){conv--;tile.t='loot';tile.tier=2}
+    if(tile.t==='loot'){const pool=ITEMS.filter(it=>it.tier===tile.tier);tile.item=pool[Math.floor(rnd()*pool.length)].id}
+    return tile;
+  });
+}
+function oddsSeq(date){const rnd=mulberry32(hashStr('odds|'+date));return range(11).map(()=>1+Math.floor(rnd()*100))}
+
+/* ---------- MEMORY emoji ---------- */
+const MEMO=['🍎','🍊','🍋','🍌','🍉','🍇','🍓','🍒','🍑','🥝','🍍','🥥','🥕','🌽','🍄','🍔','🍕','🍩','🍪','🍰',
+'🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🦆','🦉',
+'🦋','🐢','🐍','🐙','🦀','🐠','🐬','🐳','🦄','🐝','⚽','🏀','🎸','🚗','🚀','⭐','🌈','🔥','🎈','🌻'];
+
+'use strict';
+/* ===== DOM helpers + storage ===== */
+const $=(s,r=document)=>r.querySelector(s);
+function h(tag,props,...kids){
+  const e=document.createElement(tag);
+  if(props)for(const k in props){
+    const v=props[k];if(v==null||v===false)continue;
+    if(k==='class')e.className=v;
+    else if(k==='style'&&typeof v==='object'){for(const p in v){if(p.startsWith('--'))e.style.setProperty(p,v[p]);else e.style[p]=v[p]}}
+    else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);
+    else e.setAttribute(k,v===true?'':v);
+  }
+  for(const c of kids.flat(3)){if(c==null||c===false)continue;e.append(c&&c.nodeType?c:document.createTextNode(String(c)))}
+  return e;
+}
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function dayNum(s){const [y,m,d]=s.split('-').map(Number);return Math.round(Date.UTC(y,m-1,d)/864e5)}
+function fmtTime(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function cap(s){return s?s[0].toUpperCase()+s.slice(1):''}
+
+let toastT=0;
+function toast(msg,ms=1800){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms)}
+function buzz(ms=15){try{if(DB.settings.haptics&&navigator.vibrate)navigator.vibrate(ms)}catch(e){}}
+
+const KEY='puzzlebox.v1';
+function blankDB(){return{v:1,stats:{},history:[],streaks:{daily:{last:'',n:0,best:0},puzzle:{last:'',n:0,best:0}},dig:null,odds:null,book:{},resume:{},settings:{theme:'auto',haptics:true}}}
+let DB=blankDB();
+function mergeDB(o){
+  const b=blankDB();
+  DB=Object.assign(b,o||{});
+  DB.settings=Object.assign(blankDB().settings,(o&&o.settings)||{});
+  DB.streaks=Object.assign(blankDB().streaks,(o&&o.streaks)||{});
+  for(const k of ['stats','book','resume'])if(!DB[k]||typeof DB[k]!=='object')DB[k]={};
+  if(!Array.isArray(DB.history))DB.history=[];
+}
+function loadDB(){try{const s=localStorage.getItem(KEY);if(s)mergeDB(JSON.parse(s))}catch(e){}}
+function saveDB(){try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){}}
+
+/* streaks */
+function touchStreak(k){
+  const s=DB.streaks[k],t=today();if(s.last===t)return;
+  s.n=(s.last&&dayNum(t)-dayNum(s.last)===1)?s.n+1:1;s.last=t;s.best=Math.max(s.best||0,s.n);saveDB();
+}
+function streakNow(k){const s=DB.streaks[k];if(!s.last)return 0;return dayNum(today())-dayNum(s.last)<=1?s.n:0}
+
+/* results */
+function vkey(id,o){return id+'|'+(o.size||'')+'|'+(o.diff||'')}
+function vlabel(o){return o.size?o.size+'×'+o.size+(o.diff?' · '+cap(o.diff):''):''}
+function statOf(id,o){return DB.stats[vkey(id,o)]}
+function recordPlay(g,o){const k=vkey(g.id,o);const s=DB.stats[k]||(DB.stats[k]={id:g.id,size:o.size||'',diff:o.diff||'',plays:0,wins:0,best:null,bestTime:null});s.plays++;saveDB()}
+function recordResult(g,o,r){
+  const k=vkey(g.id,o);
+  const s=DB.stats[k]||(DB.stats[k]={id:g.id,size:o.size||'',diff:o.diff||'',plays:1,wins:0,best:null,bestTime:null});
+  s.wins++;
+  const prev=s.best,isBest=prev==null||r.metric<prev;
+  if(isBest)s.best=r.metric;
+  if(s.bestTime==null||r.time<s.bestTime)s.bestTime=r.time;
+  DB.history.unshift({id:g.id,size:o.size||'',diff:o.diff||'',time:Math.round(r.time),metric:Math.round(r.metric),moves:r.moves||0,hints:r.hints||0,ts:Date.now(),date:today()});
+  if(DB.history.length>300)DB.history.length=300;
+  touchStreak('puzzle');saveDB();
+  return{isBest,prev};
+}
+
+'use strict';
+/* ===== Puzzle games: each has gen(opts) -> state and mount(root, st, api) ===== */
+const HINT_PENALTY=20;
+
+/* ---------- TANGO ---------- */
+const TANGO={
+  id:'tango',name:'Tango',emoji:'🌗',color:'#f59e0b',
+  desc:'Fill the grid with suns and moons.',
+  rules:'Each row and column holds the same number of suns ☀️ and moons 🌙. No more than two of the same symbol side by side. “=” between two cells means the same symbol, “×” means different. Tap a cell to cycle sun → moon → empty.',
+  sizes:[6,8],diffs:['easy','hard'],def:{size:6,diff:'easy'},actions:['undo','hint','check','reset'],
+  gen:o=>tangoGen(o.size,o.diff),
+  mount(root,st,api){
+    const n=st.n,N=n*n,SYM=['☀️','🌙'];let flash=new Set();
+    const grid=h('div',{class:'bd tgrid',style:{'--n':n}});root.append(grid);
+    function render(){
+      grid.replaceChildren();
+      for(let i=0;i<N;i++){
+        const c=h('button',{class:'tcell'+(st.given[i]?' given':'')+(flash.has(i)?' bad':''),onclick:()=>tap(i)},st.cells[i]>=0?SYM[st.cells[i]]:'');
+        for(const e of st.edges)if(e.a===i)c.append(h('span',{class:'edge '+(e.b===i+1?'h':'v')},e.t==='='?'=':'×'));
+        grid.append(c);
+      }
+    }
+    function won(){if(st.cells.every((v,i)=>v===st.sol[i])){api.win({moves:st.moves});return true}return false}
+    function tap(i){
+      if(st.given[i]||st.done||api.paused())return;
+      const p=st.cells[i];st.hist.push({i,p});
+      st.cells[i]=p===-1?0:p===0?1:-1;st.moves++;flash=new Set();
+      api.buzz();render();api.save();won();
+    }
+    render();
+    return{act:{
+      undo(){const m=st.hist.pop();if(!m)return toast('Nothing to undo');st.cells[m.i]=m.p;flash=new Set();render();api.save()},
+      hint(){
+        const bad=[],emp=[];
+        for(let i=0;i<N;i++){if(st.given[i])continue;if(st.cells[i]===-1)emp.push(i);else if(st.cells[i]!==st.sol[i])bad.push(i)}
+        const pool=bad.length?bad:emp;if(!pool.length)return;
+        const i=pool[Math.floor(Math.random()*pool.length)];
+        st.hist.push({i,p:st.cells[i]});st.cells[i]=st.sol[i];api.useHint();render();api.save();won();
+      },
+      check(){
+        flash=new Set();st.cells.forEach((v,i)=>{if(v>=0&&v!==st.sol[i])flash.add(i)});
+        if(!flash.size)toast('No mistakes so far ✓');else toast(flash.size+' wrong');
+        render();setTimeout(()=>{flash=new Set();if(!st.done)render()},2200);
+      },
+      reset(){if(!confirm('Clear the board?'))return;for(let i=0;i<N;i++)if(!st.given[i])st.cells[i]=-1;st.hist=[];render();api.save()}
+    }};
+  }
+};
+
+/* ---------- MEMORY ---------- */
+const MEMORY={
+  id:'memory',name:'Memory',emoji:'🃏',color:'#ec4899',
+  desc:'Flip cards and find every pair.',
+  rules:'Flip two cards at a time and match all the pairs. Your score is time in seconds plus number of moves (lower is better). Peek shows every card for a moment (+20s).',
+  sizes:[6,8,10],diffs:null,def:{size:6},actions:['hint'],metric:'score',
+  gen(o){
+    const n=o.size,pairs=n*n/2,pick=shuffle(MEMO.slice()).slice(0,pairs);
+    return{n,deck:shuffle(pick.concat(pick)),match:new Array(n*n).fill(0),flip:[],moves:0};
+  },
+  mount(root,st,api){
+    const n=st.n,N=n*n;let lock=false,peek=false;st.flip=[];
+    const info=h('div',{class:'info'});
+    const grid=h('div',{class:'bd mgrid',style:{'--n':n}});root.append(info,grid);
+    const els=[];
+    for(let i=0;i<N;i++){const c=h('button',{class:'mcard',onclick:()=>tap(i)},h('span',null,st.deck[i]));els.push(c);grid.append(c)}
+    function upd(){
+      els.forEach((c,i)=>{c.classList.toggle('up',peek&&!st.match[i]||st.flip.includes(i));c.classList.toggle('match',!!st.match[i])});
+      const m=st.match.reduce((a,b)=>a+b,0)/2;
+      info.textContent='Moves '+st.moves+'  ·  Pairs '+m+'/'+N/2;
+    }
+    function tap(i){
+      if(lock||st.done||api.paused()||st.match[i]||st.flip.includes(i))return;
+      st.flip.push(i);api.buzz(8);upd();
+      if(st.flip.length===2){
+        st.moves++;const [a,b]=st.flip;
+        if(st.deck[a]===st.deck[b]){
+          st.match[a]=st.match[b]=1;st.flip=[];upd();api.buzz(25);
+          if(st.match.every(Boolean)){api.save();api.win({moves:st.moves,add:st.moves});return}
+        }else{lock=true;setTimeout(()=>{st.flip=[];lock=false;upd()},650)}
+      }
+      upd();api.save();
+    }
+    upd();
+    return{act:{hint(){if(lock||peek)return;peek=true;lock=true;api.useHint();upd();setTimeout(()=>{peek=false;lock=false;upd()},1200)}}};
+  }
+};
+
+/* ---------- WORD SEARCH ---------- */
+const WORDSEARCH={
+  id:'words',name:'Word Search',emoji:'🔤',color:'#0ea5e9',
+  desc:'Find the hidden words.',
+  rules:'Drag across letters to select a word, or tap its first and last letter. Easy puzzles hide words across and down only. Hard puzzles use all 8 directions, including backwards. Hint highlights the first letter of a word (+20s).',
+  sizes:[8,10,12],diffs:['easy','hard'],def:{size:8,diff:'easy'},actions:['hint'],
+  gen:o=>wordsGen(o.size,o.diff),
+  mount(root,st,api){
+    const n=st.n,N=n*n;
+    const grid=h('div',{class:'bd wgrid',style:{'--n':n}});
+    const list=h('div',{class:'wlist'});root.append(grid,list);
+    const cells=[];
+    for(let i=0;i<N;i++){const c=h('div',{class:'wcell','data-i':i},st.grid[i]);cells.push(c);grid.append(c)}
+    const D=[[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1],[-1,0],[-1,1]];
+    let start=-1,cur=-1,moved=false,anchor=-1,hintCell=-1;
+    function paint(){
+      cells.forEach(c=>{c.classList.remove('f');c.style.removeProperty('--fc')});
+      Object.keys(st.found).forEach((w,k)=>st.found[w].forEach(i=>{cells[i].classList.add('f');cells[i].style.setProperty('--fc','hsl('+((k*47)%360)+' 70% 62% / .6)')}));
+      list.replaceChildren(...st.words.map(w=>h('span',{class:'wword'+(st.found[w]?' f':'')},w)));
+      cells.forEach((c,i)=>c.classList.toggle('hint',i===hintCell));
+    }
+    function sel(ln){cells.forEach(c=>c.classList.remove('sel'));ln.forEach(i=>cells[i].classList.add('sel'))}
+    function line(a,b){
+      const r0=(a/n)|0,c0=a%n,dr=((b/n)|0)-r0,dc=b%n-c0;
+      if(!dr&&!dc)return[a];
+      const q=Math.round(Math.atan2(dr,dc)/(Math.PI/4)),[ur,uc]=D[((q%8)+8)%8];
+      const len=Math.max(0,Math.round((dr*ur+dc*uc)/(ur*ur+uc*uc))),out=[];
+      for(let k=0;k<=len;k++){const r=r0+ur*k,c=c0+uc*k;if(r<0||r>=n||c<0||c>=n)break;out.push(r*n+c)}
+      return out;
+    }
+    function evaluate(ln){
+      sel([]);if(ln.length<2)return;
+      const s=ln.map(i=>st.grid[i]).join(''),r=s.split('').reverse().join('');
+      const w=st.words.find(x=>!st.found[x]&&(x===s||x===r));
+      if(w){
+        st.found[w]=ln;st.moves++;hintCell=-1;api.buzz(30);paint();api.save();toast('Found '+w+'  ('+Object.keys(st.found).length+'/'+st.words.length+')',1200);
+        if(Object.keys(st.found).length===st.words.length)api.win({moves:st.moves});
+      }else{
+        api.buzz(10);ln.forEach(i=>cells[i].classList.add('no'));setTimeout(()=>ln.forEach(i=>cells[i].classList.remove('no')),260);
+      }
+    }
+    function cellAt(x,y){const e=document.elementFromPoint(x,y);return e&&e.dataset&&e.dataset.i!==undefined&&grid.contains(e)?+e.dataset.i:-1}
+    grid.addEventListener('pointerdown',e=>{
+      if(st.done||api.paused())return;
+      const c=cellAt(e.clientX,e.clientY);if(c<0)return;
+      start=cur=c;moved=false;try{grid.setPointerCapture(e.pointerId)}catch(_){}
+      sel(anchor>=0?line(anchor,c):[c]);
+    });
+    grid.addEventListener('pointermove',e=>{
+      if(start<0)return;
+      const c=cellAt(e.clientX,e.clientY);
+      if(c>=0&&c!==cur){cur=c;moved=true;anchor=-1;sel(line(start,cur))}
+    });
+    const end=()=>{
+      if(start<0)return;
+      if(moved){evaluate(line(start,cur));anchor=-1}
+      else if(anchor<0){anchor=start;sel([start])}
+      else if(anchor===start){anchor=-1;sel([])}
+      else{
+        const ln=line(anchor,start);
+        if(ln.length>1&&ln[ln.length-1]===start){anchor=-1;evaluate(ln)}else{anchor=start;sel([start])}
+      }
+      start=-1;
+    };
+    grid.addEventListener('pointerup',end);
+    grid.addEventListener('pointercancel',()=>{start=-1;sel([])});
+    paint();
+    return{act:{hint(){
+      const left=st.words.filter(w=>!st.found[w]);if(!left.length)return;
+      const w=left[Math.floor(Math.random()*left.length)],p=st.placed[w];
+      hintCell=p.r*n+p.c;api.useHint();paint();toast('Starts here: '+w[0]+'…',1500);
+    }}};
+  }
+};
+
+/* ---------- QUEENS / STAR BATTLE ---------- */
+const QUEENS={
+  id:'queens',name:'Queens',emoji:'👑',color:'#8b5cf6',
+  desc:'One queen per row, column and colour.',
+  rules:'Place exactly one queen in every row, column and colour region. No two queens may touch, even diagonally. Tap once for an ✕ note, twice for a queen, three times to clear.',
+  sizes:[5,6,7,8,9],diffs:null,def:{size:6},actions:['undo','hint','check','reset'],
+  gen:o=>queensGen(o.size),
+  mount(root,st,api){
+    const n=st.n,N=n*n,HUE=[4,44,86,130,170,205,245,285,325];
+    let flash=new Set();
+    const grid=h('div',{class:'bd qgrid',style:{'--n':n}});root.append(grid);
+    function conflicts(){
+      const q=[];st.marks.forEach((m,i)=>m===2&&q.push(i));const bad=new Set();
+      for(let x=0;x<q.length;x++)for(let y=x+1;y<q.length;y++){
+        const a=q[x],b=q[y],ar=(a/n)|0,br=(b/n)|0,ac=a%n,bc=b%n;
+        if(ar===br||ac===bc||st.reg[a]===st.reg[b]||(Math.abs(ar-br)<=1&&Math.abs(ac-bc)<=1)){bad.add(a);bad.add(b)}
+      }
+      return{q,bad};
+    }
+    function render(){
+      grid.replaceChildren();
+      for(let i=0;i<N;i++){
+        const r=(i/n)|0,c=i%n,g=st.reg[i];
+        const diff=(j)=>st.reg[j]!==g;
+        const thick='var(--ink)',thin='rgba(0,0,0,.2)';
+        const cell=h('button',{class:'qcell'+(flash.has(i)?' bad':''),style:{'--h':HUE[g%9],
+          borderTopWidth:r>0?(diff(i-n)?'3px':'1px'):'0',borderTopColor:r>0&&diff(i-n)?thick:thin,
+          borderLeftWidth:c>0?(diff(i-1)?'3px':'1px'):'0',borderLeftColor:c>0&&diff(i-1)?thick:thin,
+          borderRightWidth:'0',borderBottomWidth:'0'},onclick:()=>tap(i)},
+          st.marks[i]===2?'👑':st.marks[i]===1?h('span',{class:'x'},'✕'):'');
+        grid.append(cell);
+      }
+    }
+    function won(){const {q,bad}=conflicts();if(q.length===n&&!bad.size){api.win({moves:st.moves});return true}return false}
+    function tap(i){
+      if(st.done||api.paused())return;
+      st.hist.push({i,p:st.marks[i]});st.marks[i]=(st.marks[i]+1)%3;st.moves++;flash=new Set();
+      api.buzz();render();api.save();won();
+    }
+    render();
+    return{act:{
+      undo(){const m=st.hist.pop();if(!m)return toast('Nothing to undo');st.marks[m.i]=m.p;flash=new Set();render();api.save()},
+      hint(){
+        const rows=range(n).filter(r=>st.marks[r*n+st.sol[r]]!==2);if(!rows.length)return;
+        const r=rows[Math.floor(Math.random()*rows.length)];
+        for(let c=0;c<n;c++)if(st.marks[r*n+c]===2){st.hist.push({i:r*n+c,p:2});st.marks[r*n+c]=0}
+        st.hist.push({i:r*n+st.sol[r],p:st.marks[r*n+st.sol[r]]});st.marks[r*n+st.sol[r]]=2;
+        api.useHint();render();api.save();won();
+      },
+      check(){
+        const {bad}=conflicts();flash=new Set(bad);
+        st.marks.forEach((m,i)=>{if(m===2&&st.sol[(i/n)|0]!==i%n)flash.add(i)});
+        toast(flash.size?'Some queens are in the wrong place':'No mistakes so far ✓');
+        render();setTimeout(()=>{flash=new Set();if(!st.done)render()},2200);
+      },
+      reset(){if(!confirm('Clear the board?'))return;st.marks.fill(0);st.hist=[];render();api.save()}
+    }};
+  }
+};
+
+/* ---------- MINI SUDOKU ---------- */
+const SUDOKU={
+  id:'sudoku',name:'Mini Sudoku',emoji:'🔢',color:'#10b981',
+  desc:'4×4 and 6×6 Sudoku.',
+  rules:'Fill the grid so every row, column and box holds each number once. 4×4 uses 2×2 boxes; 6×6 uses boxes 3 wide and 2 tall. Use ✎ for pencil notes. Hint fills a cell (+20s).',
+  sizes:[4,6],diffs:['easy','medium','hard'],def:{size:6,diff:'easy'},actions:['undo','hint','check'],
+  gen:o=>sudokuGen(o.size,o.diff),
+  mount(root,st,api){
+    const n=st.n,N=n*n,{bh,bw}=sudokuDims(n);let flash=new Set();
+    const grid=h('div',{class:'bd sgrid',style:{'--n':n}});
+    const pad=h('div',{class:'pad'});root.append(grid,pad);
+    function dupes(){
+      const bad=new Set();
+      for(let i=0;i<N;i++){
+        const v=st.cells[i];if(!v)continue;
+        const r=(i/n)|0,c=i%n;
+        for(let j=0;j<N;j++){
+          if(j===i||st.cells[j]!==v)continue;
+          const r2=(j/n)|0,c2=j%n;
+          if(r===r2||c===c2||(Math.floor(r/bh)===Math.floor(r2/bh)&&Math.floor(c/bw)===Math.floor(c2/bw))){bad.add(i);break}
+        }
+      }
+      return bad;
+    }
+    function render(){
+      const bad=dupes(),sv=st.sel>=0?st.cells[st.sel]:0;
+      grid.replaceChildren();
+      for(let i=0;i<N;i++){
+        const r=(i/n)|0,c=i%n,v=st.cells[i];
+        let cls='scell'+(st.given[i]?' given':v?' user':'');
+        if(i===st.sel)cls+=' sel';else if(sv&&v===sv)cls+=' same';
+        if(bad.has(i)&&!st.given[i])cls+=' err';
+        if(flash.has(i))cls+=' wrong';
+        let body='';
+        if(v)body=String(v);
+        else if(st.notes[i]){body=h('div',{class:'notes'},range(n).map(d=>h('span',null,st.notes[i]>>d&1?String(d+1):'')))}
+        grid.append(h('button',{class:cls,style:{
+          borderRightWidth:c<n-1?((c+1)%bw===0?'3px':'1px'):'0',borderBottomWidth:r<n-1?((r+1)%bh===0?'3px':'1px'):'0',
+          borderRightColor:(c+1)%bw===0?'var(--ink)':'var(--line)',borderBottomColor:(r+1)%bh===0?'var(--ink)':'var(--line)',
+          borderLeftWidth:'0',borderTopWidth:'0'},onclick:()=>{if(api.paused())return;st.sel=st.sel===i?-1:i;render()}},body));
+      }
+      pad.replaceChildren(
+        ...range(n).map(d=>h('button',{onclick:()=>put(d+1)},String(d+1))),
+        h('button',{class:'sm',onclick:()=>put(0)},'⌫'),
+        h('button',{class:'sm'+(st.noteMode?' on':''),onclick:()=>{st.noteMode=!st.noteMode;render()}},'✎')
+      );
+    }
+    function won(){if(st.cells.every((v,i)=>v&&v===st.sol[i])){api.win({moves:st.moves});return true}return false}
+    function put(d){
+      if(st.done||api.paused())return;
+      const i=st.sel;if(i<0)return toast('Select a cell first');
+      if(st.given[i])return;
+      if(st.noteMode&&d&&!st.cells[i]){st.hist.push({i,v:st.cells[i],nt:st.notes[i]});st.notes[i]^=1<<(d-1)}
+      else{
+        if(st.noteMode&&d&&st.cells[i])return;
+        st.hist.push({i,v:st.cells[i],nt:st.notes[i]});
+        st.cells[i]=(d&&st.cells[i]===d)?0:d;st.notes[i]=0;st.moves++;
+      }
+      flash=new Set();api.buzz(10);render();api.save();won();
+    }
+    render();
+    return{act:{
+      undo(){const m=st.hist.pop();if(!m)return toast('Nothing to undo');st.cells[m.i]=m.v;st.notes[m.i]=m.nt;st.sel=m.i;flash=new Set();render();api.save()},
+      hint(){
+        let i=st.sel;
+        if(i<0||st.given[i]||st.cells[i]===st.sol[i]){
+          const pool=range(N).filter(j=>!st.given[j]&&st.cells[j]!==st.sol[j]);if(!pool.length)return;
+          i=pool[Math.floor(Math.random()*pool.length)];
+        }
+        st.hist.push({i,v:st.cells[i],nt:st.notes[i]});st.cells[i]=st.sol[i];st.notes[i]=0;st.sel=i;
+        api.useHint();render();api.save();won();
+      },
+      check(){
+        flash=new Set();st.cells.forEach((v,i)=>{if(v&&v!==st.sol[i])flash.add(i)});
+        toast(flash.size?flash.size+' wrong':'No mistakes so far ✓');
+        render();setTimeout(()=>{flash=new Set();if(!st.done)render()},2200);
+      }
+    }};
+  }
+};
+
+/* ---------- ZIP ---------- */
+const ZIP={
+  id:'zip',name:'Zip',emoji:'〰️',color:'#ef4444',
+  desc:'Draw one path through every cell.',
+  rules:'Start at 1 and drag a single line through the numbers in order, ending on the last number. The line must fill every cell exactly once. Drag back over your line to undo. Easy has more numbers to guide you.',
+  sizes:[5,6,7],diffs:['easy','hard'],def:{size:5,diff:'easy'},actions:['undo','hint','reset'],
+  gen:o=>zipGen(o.size,o.diff),
+  mount(root,st,api){
+    const n=st.n,N=n*n,NS='http://www.w3.org/2000/svg';
+    const grid=h('div',{class:'bd zgrid',style:{'--n':n}});root.append(grid);
+    const cells=[],nums={};
+    for(let i=0;i<N;i++){
+      const c=h('div',{class:'zcell','data-i':i});
+      if(st.nums[i]){const b=h('div',{class:'znum'},String(st.nums[i]));nums[i]=b;c.append(b)}
+      cells.push(c);grid.append(c);
+    }
+    const svg=document.createElementNS(NS,'svg');svg.setAttribute('class','zsvg');svg.setAttribute('viewBox','0 0 '+n+' '+n);
+    const pl=document.createElementNS(NS,'polyline');
+    pl.setAttribute('fill','none');pl.setAttribute('stroke','var(--ac)');pl.setAttribute('stroke-width','.36');pl.setAttribute('stroke-linecap','round');pl.setAttribute('stroke-linejoin','round');pl.setAttribute('opacity','.9');
+    const dot=document.createElementNS(NS,'circle');dot.setAttribute('r','.26');dot.setAttribute('fill','var(--ac)');
+    svg.append(pl,dot);grid.append(svg);
+    const path=st.path;
+    const xy=i=>((i%n)+.5)+','+(((i/n)|0)+.5);
+    function draw(){
+      pl.setAttribute('points',path.map(xy).join(' '));
+      if(path.length){const h0=path[path.length-1];dot.setAttribute('cx',(h0%n)+.5);dot.setAttribute('cy',((h0/n)|0)+.5);dot.style.display=''}else dot.style.display='none';
+      const on=new Set(path);cells.forEach((c,i)=>c.classList.toggle('on',on.has(i)));
+      for(const i in nums)nums[i].classList.toggle('hit',on.has(+i));
+    }
+    const reached=()=>path.filter(i=>st.nums[i]).length;
+    function stepTo(t){
+      if(!path.length){if(st.nums[t]===1)path.push(t);return}
+      for(let g=0;g<n*2;g++){
+        const head=path[path.length-1];if(head===t)return;
+        const ti=path.indexOf(t);if(ti>=0){path.length=ti+1;return}
+        const hr=(head/n)|0,hc=head%n,dr=((t/n)|0)-hr,dc=t%n-hc;
+        let nr=hr,nc=hc;
+        if(Math.abs(dr)>=Math.abs(dc)&&dr!==0)nr+=Math.sign(dr);else nc+=Math.sign(dc);
+        const nx=nr*n+nc;
+        if(path.length>1&&nx===path[path.length-2]){path.pop();continue}
+        if(path.includes(nx))return;
+        if(st.nums[head]===st.K)return;
+        if(st.nums[nx]&&st.nums[nx]!==reached()+1)return;
+        path.push(nx);
+      }
+    }
+    function won(){if(path.length===N&&st.nums[path[N-1]]===st.K){api.win({moves:st.hist.length});return true}return false}
+    let drag=false,before=null;
+    const cellAt=(x,y)=>{const e=document.elementFromPoint(x,y);const c=e&&e.closest&&e.closest('.zcell');return c&&grid.contains(c)?+c.dataset.i:-1};
+    grid.addEventListener('pointerdown',e=>{
+      if(st.done||api.paused())return;
+      const c=cellAt(e.clientX,e.clientY);if(c<0)return;
+      drag=true;before=path.slice();try{grid.setPointerCapture(e.pointerId)}catch(_){}
+      if(!path.length&&st.nums[c]!==1)toast('Start on number 1');
+      stepTo(c);draw();
+    });
+    grid.addEventListener('pointermove',e=>{
+      if(!drag)return;const c=cellAt(e.clientX,e.clientY);if(c<0)return;
+      const L=path.length;stepTo(c);if(path.length!==L)api.buzz(6);draw();
+    });
+    const up=()=>{
+      if(!drag)return;drag=false;
+      if(before&&(before.length!==path.length||before.some((v,i)=>v!==path[i]))){st.hist.push(before);if(st.hist.length>60)st.hist.shift();api.save();won()}
+    };
+    grid.addEventListener('pointerup',up);grid.addEventListener('pointercancel',up);
+    draw();
+    return{act:{
+      undo(){const b=st.hist.pop();if(!b)return toast('Nothing to undo');path.length=0;path.push(...b);draw();api.save()},
+      hint(){
+        let k=0;while(k<path.length&&path[k]===st.sol[k])k++;
+        st.hist.push(path.slice());const to=Math.min(N,k+Math.max(3,Math.floor(N/6)));
+        path.length=0;path.push(...st.sol.slice(0,to));api.useHint();draw();api.save();won();
+      },
+      reset(){if(!path.length)return;st.hist.push(path.slice());path.length=0;draw();api.save()}
+    }};
+  }
+};
+
+const GAMES=[TANGO,MEMORY,WORDSEARCH,QUEENS,SUDOKU,ZIP];
+
+'use strict';
+/* ===== Daily Dig, Daily Odds, Collection Book ===== */
+const DIG_BASE=5;
+const pts=x=>TIERS[x.tier].pts;
+const itemOf=id=>ITEMS[id];
+function digLeft(d){return DIG_BASE+(DB.streaks.puzzle.last===d.date?1:0)+d.picks-d.used}
+function pouchVal(d){return d.pouch.reduce((a,x)=>a+pts(x),0)}
+function bankedVal(d){return d.banked.reduce((a,x)=>a+pts(x),0)}
+function digRecord(d){
+  DB.history=DB.history.filter(x=>!(x.id==='dig'&&x.date===d.date));
+  DB.history.unshift({id:'dig',date:d.date,score:bankedVal(d),items:d.banked.length,ts:Date.now()});
+}
+function digBank(d){
+  for(const x of d.pouch){d.banked.push(x);DB.book[x.item]=(DB.book[x.item]||0)+1}
+  d.pouch=[];digRecord(d);
+}
+function digSettle(d){if(digLeft(d)<=0){if(d.pouch.length)digBank(d);else digRecord(d)}}
+function digState(){
+  const t=today();
+  if(DB.dig&&DB.dig.date===t)return DB.dig;
+  if(DB.dig){if(DB.dig.pouch.length)digBank(DB.dig);else if(DB.dig.used>0)digRecord(DB.dig)}
+  const s=DB.streaks.daily;
+  const luck=(s.last&&dayNum(t)-dayNum(s.last)<=1)?Math.min(3,Math.floor(s.n/7)):0;
+  DB.dig={date:t,luck,rev:[],used:0,picks:0,shield:false,pouch:[],banked:[]};
+  saveDB();return DB.dig;
+}
+let digMsg='';
+function digTile(i){
+  const d=digState(),b=digBoard(d.date,d.luck);
+  if(d.rev.includes(i)||digLeft(d)<=0)return;
+  touchStreak('daily');d.rev.push(i);d.used++;
+  const t=b[i];
+  if(t.t==='trap'){
+    if(d.shield){d.shield=false;digMsg='💥 Trap! Your shield saved the pouch.'}
+    else{const lost=pouchVal(d);d.pouch=[];digMsg=lost?'💥 Trap! Lost '+lost+' pts of unbanked loot.':'💥 Trap! Nothing in the pouch to lose.'}
+    buzz(60);
+  }else if(t.t==='pick'){d.picks++;digMsg='⛏️ Spare pickaxe: +1 dig!';buzz(25)}
+  else if(t.t==='shield'){d.shield=true;digMsg='🛡️ Shield: blocks the next trap.';buzz(25)}
+  else if(t.t==='loot'){const it=itemOf(t.item);d.pouch.push({tier:t.tier,item:t.item});digMsg=it.emoji+' '+it.name+' — '+TIERS[t.tier].name+' (+'+TIERS[t.tier].pts+')';buzz(t.tier>=3?[30,40,60]:25)}
+  else{digMsg='Just dirt…'}
+  digSettle(d);saveDB();
+}
+function digBankNow(){
+  const d=digState();
+  if(!d.pouch.length||digLeft(d)<2)return;
+  touchStreak('daily');d.used++;digBank(d);digMsg='🏦 Banked! Safe from traps.';saveDB();
+}
+
+function renderDig(){
+  const d=digState(),b=digBoard(d.date,d.luck),left=digLeft(d),over=left<=0;
+  const root=h('div',{style:{'--ac':'#b7791f'}});
+  root.append(topBar('⛏️ Daily Dig',d.date));
+  root.append(h('div',{class:'dstat'},
+    h('div',null,h('b',null,String(Math.max(0,left))),h('span',null,'Digs left')),
+    h('div',null,h('b',null,String(pouchVal(d))),h('span',null,'Pouch')),
+    h('div',null,h('b',null,String(bankedVal(d))),h('span',null,'Banked')),
+    h('div',null,h('b',null,d.shield?'🛡️':String(streakNow('daily'))),h('span',null,d.shield?'Shield':'Day streak'))
+  ));
+  root.append(h('div',{class:'msg'},digMsg||(over?'Run complete! Come back tomorrow.':'Tap a tile to dig.')));
+  const grid=h('div',{class:'dgrid'});
+  b.forEach((t,i)=>{
+    const rev=d.rev.includes(i);
+    let txt='',col='';
+    if(rev||over){
+      if(t.t==='trap')txt='💥';else if(t.t==='pick')txt='⛏️';else if(t.t==='shield')txt='🛡️';
+      else if(t.t==='loot'){txt=itemOf(t.item).emoji;col=TIERS[t.tier].col}else txt='·';
+    }
+    grid.append(h('button',{class:'dtile'+((rev||over)?' rev':'')+(!rev&&over?' ghost':''),style:col?{'--tc':col}:null,disabled:rev||over,onclick:()=>{digTile(i);redrawDaily(renderDig)}},txt));
+  });
+  root.append(grid);
+  root.append(h('div',{class:'sec'},'Pouch (lost if you hit a trap)'));
+  root.append(h('div',{class:'pouch'},d.pouch.length?d.pouch.map(x=>itemOf(x.item).emoji):h('span',{class:'sub'},'Empty')));
+  root.append(h('div',{class:'row',style:{marginTop:'12px'}},
+    h('button',{class:'btn',disabled:!d.pouch.length||left<2,onclick:()=>{digBankNow();redrawDaily(renderDig)}},'Bank pouch (−1 dig)'),
+    h('button',{class:'btn ghost',onclick:()=>nav({r:'book'})},'📖 Book '+Object.keys(DB.book).length+'/'+ITEMS.length)
+  ));
+  const bonus=DB.streaks.puzzle.last===d.date;
+  const extra=[bonus?'✅ Puzzle bonus dig earned today.':'Win any puzzle today for +1 dig.'];
+  if(d.luck)extra.push('🍀 Lucky streak: '+d.luck*2+' extra rare tiles on today’s board.');
+  else extra.push('Keep a 7-day streak to make the board luckier.');
+  root.append(h('div',{class:'box rules'},
+    h('div',null,'5 digs per day. Loot goes in your pouch. A trap 💥 wipes the pouch. Banking secures it but costs a dig. When digs run out, the pouch is banked automatically. ⛏️ gives a spare dig, 🛡️ blocks one trap.'),
+    h('div',{style:{marginTop:'6px'}},extra.join(' '))
+  ));
+  return root;
+}
+
+/* ---------- Odds ---------- */
+let oddsReveal=null;
+function oddsState(){
+  const t=today();
+  if(DB.odds&&DB.odds.date===t)return DB.odds;
+  DB.odds={date:t,seq:oddsSeq(t),i:0,res:[],streak:0,score:0,done:false};saveDB();return DB.odds;
+}
+function oddsCalc(cur,g,streak){
+  const p=g==='H'?(101-cur)/100:cur/100;
+  const base=Math.min(200,Math.round(10/p)),mult=Math.min(3,1+.25*streak);
+  return{p,base,mult,pts:Math.round(base*mult)};
+}
+function oddsGuess(g){
+  const o=oddsState();if(o.done)return;
+  touchStreak('daily');
+  const cur=o.seq[o.i],nx=o.seq[o.i+1],c=oddsCalc(cur,g,o.streak);
+  const ok=g==='H'?nx>=cur:nx<=cur;
+  const gain=ok?c.pts:0;
+  o.res.push({g,cur,nx,ok,pts:gain});o.score+=gain;o.streak=ok?o.streak+1:0;o.i++;
+  if(o.i>=10){
+    o.done=true;
+    DB.history=DB.history.filter(x=>!(x.id==='odds'&&x.date===o.date));
+    DB.history.unshift({id:'odds',date:o.date,score:o.score,hits:o.res.filter(r=>r.ok).length,ts:Date.now()});
+  }
+  oddsReveal={cur,nx,ok,pts:gain,tie:cur===nx};
+  buzz(ok?30:[40,30,40]);saveDB();
+}
+function oddsShare(o){
+  return 'Daily Odds '+o.date+'\n'+o.res.map(r=>r.ok?'🟩':'🟥').join('')+'\nScore: '+o.score;
+}
+function renderOdds(){
+  const o=oddsState(),root=h('div',{style:{'--ac':'#d9480f'}});
+  root.append(topBar('🎲 Daily Odds',o.date));
+  const shown=oddsReveal;
+  const round=Math.min(10,o.i+(shown?0:1));
+  root.append(h('div',{class:'dstat',style:{gridTemplateColumns:'repeat(3,1fr)'}},
+    h('div',null,h('b',null,Math.min(10,shown?o.i:o.i+1)+'/10'),h('span',null,'Round')),
+    h('div',null,h('b',null,String(o.score)),h('span',null,'Score')),
+    h('div',null,h('b',null,'×'+Math.min(3,1+.25*o.streak).toFixed(2).replace(/\.?0+$/,'')),h('span',null,'Streak bonus'))
+  ));
+  if(shown){
+    root.append(h('div',{class:'oddsbox'},
+      h('div',{class:'ocard'},h('small',null,'Was'),String(shown.cur)),
+      h('div',{class:'ocard '+(shown.ok?'ok':'no')},h('small',null,'Rolled'),String(shown.nx))
+    ));
+    root.append(h('div',{class:'msg'},shown.ok?(shown.tie?'Tie counts as a win! ':'Correct! ')+'+'+shown.pts:'Missed it. Streak reset.'));
+    root.append(h('button',{class:'btn',style:{width:'100%',marginTop:'12px'},onclick:()=>{oddsReveal=null;redrawDaily(renderOdds)}},o.done?'See results':'Next roll ▶'));
+  }else if(o.done){
+    root.append(h('div',{class:'box',style:{textAlign:'center'}},
+      h('div',{class:'sub'},'Final score'),h('div',{style:{fontSize:'46px',fontWeight:'800'}},String(o.score)),
+      h('div',{class:'trail'},o.res.map(r=>r.ok?'🟩':'🟥')),
+      h('div',{class:'sub'},o.res.filter(r=>r.ok).length+'/10 correct · come back tomorrow')
+    ));
+    const prior=DB.history.filter(x=>x.id==='odds'&&x.date!==o.date).map(x=>x.score);
+    const best=Math.max(0,...prior);
+    if(o.score>best)root.append(h('div',{class:'msg',style:{color:'var(--ok)'}},'🏆 New personal best!'));
+    root.append(h('button',{class:'btn ghost',style:{width:'100%'},onclick:()=>{
+      const t=oddsShare(o);
+      if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast('Result copied'),()=>toast(t,4000));else toast(t,4000);
+    }},'Copy result'));
+  }else{
+    const cur=o.seq[o.i],H=oddsCalc(cur,'H',o.streak),L=oddsCalc(cur,'L',o.streak);
+    root.append(h('div',{class:'oddsbox'},
+      h('div',{class:'ocard'},h('small',null,'Current'),String(cur)),
+      h('div',{class:'ocard q'},h('small',null,'Next'),'?')
+    ));
+    root.append(h('div',{class:'sub',style:{textAlign:'center',marginBottom:'10px'}},'Rolls are 1–100. Riskier bets pay more.'));
+    root.append(h('div',{class:'bets'},
+      h('button',{onclick:()=>{oddsGuess('H');redrawDaily(renderOdds)}},'Higher ▲',h('small',null,Math.round(H.p*100)+'% · +'+H.pts)),
+      h('button',{class:'lo',onclick:()=>{oddsGuess('L');redrawDaily(renderOdds)}},'Lower ▼',h('small',null,Math.round(L.p*100)+'% · +'+L.pts))
+    ));
+    root.append(h('div',{class:'trail'},o.res.map(r=>r.ok?'🟩':'🟥')));
+  }
+  root.append(h('div',{class:'box rules'},'10 rolls. Guess if the next number is higher or lower. A tie counts as a win. Points = 10 ÷ chance of winning (max 200), times a streak bonus that grows 0.25 per correct guess up to ×3. Same numbers all day, one run per day.'));
+  return root;
+}
+
+function renderBook(){
+  const root=h('div',{style:{'--ac':'#b7791f'}});
+  const have=Object.keys(DB.book).length;
+  root.append(topBar('📖 Collection',have+' of '+ITEMS.length+' found'));
+  TIERS.forEach((t,ti)=>{
+    root.append(h('div',{class:'sec'},t.name+' · '+t.pts+' pt'+(t.pts>1?'s':'')));
+    root.append(h('div',{class:'book'},ITEMS.filter(i=>i.tier===ti).map(i=>{
+      const n=DB.book[i.id]||0;
+      return h('div',{class:'bi'+(n?'':' lock'),style:{'--tc':t.col}},n?i.emoji:'❔',h('small',null,n?i.name+(n>1?' ×'+n:''):'???'));
+    })));
+  });
+  return root;
+}
+function redrawDaily(fn){const v=$('#view');const y=window.scrollY;v.replaceChildren(fn());window.scrollTo(0,y)}
+
+'use strict';
+/* ===== App shell: routing, home, setup, play, stats, settings ===== */
+let ACTIVE=null;
+function applyTheme(){
+  const t=DB.settings.theme;document.documentElement.dataset.theme=t;
+  const dark=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme:dark)').matches);
+  const m=$('meta[name=theme-color]');if(m)m.content=dark?'#15120f':'#faf6f0';
+}
+function topBar(title,sub,right){
+  return h('div',{class:'top'},
+    h('button',{class:'iconbtn','aria-label':'Back',onclick:back},'‹'),
+    h('div',{class:'grow'},h('div',{class:'ttl'},title),sub?h('div',{class:'sub'},sub):null),
+    right||null);
+}
+function nav(s){history.pushState(Object.assign({},s,{d:((history.state&&history.state.d)||0)+1}),'');show(s)}
+function goHome(){const d=(history.state&&history.state.d)||0;if(d>0)history.go(-d);else show({r:'home'})}
+function back(){if(history.state&&history.state.r&&history.state.r!=='home')history.back();else show({r:'home'})}
+function cleanup(){
+  if(ACTIVE){clearInterval(ACTIVE.iv);if(!ACTIVE.st.done)ACTIVE.api.save();ACTIVE=null}
+  document.querySelectorAll('.modal').forEach(m=>m.remove());
+}
+function show(s){
+  cleanup();window.scrollTo(0,0);
+  const v=$('#view');
+  try{
+    if(s.r==='play'){const g=GAMES.find(x=>x.id===s.g);if(g&&(s.o||DB.resume[g.id]))return startGame(g,s.o,!s.o);}
+    let el;
+    switch(s.r){
+      case 'setup':el=renderSetup(GAMES.find(x=>x.id===s.g)||GAMES[0]);break;
+      case 'stats':el=renderStats('all');break;
+      case 'settings':el=renderSettings();break;
+      case 'dig':el=renderDig();break;
+      case 'odds':el=renderOdds();break;
+      case 'book':el=renderBook();break;
+      default:el=renderHome();
+    }
+    v.replaceChildren(el);
+  }catch(err){v.replaceChildren(h('div',{class:'box'},'Something went wrong: '+err.message,h('div',null,h('button',{class:'btn',onclick:()=>show({r:'home'})},'Home'))));console.error(err)}
+}
+
+/* ---------- Home ---------- */
+function renderHome(){
+  const root=h('div');
+  root.append(h('h1',null,'🧩 Puzzle Box'));
+  root.append(h('div',{class:'pills'},
+    h('span',{class:'pill'},'🔥 Daily streak ',h('b',null,String(streakNow('daily')))),
+    h('span',{class:'pill'},'🧠 Puzzle streak ',h('b',null,String(streakNow('puzzle'))))
+  ));
+  root.append(h('div',{class:'sec'},'Daily'));
+  const t=today();
+  const dg=DB.dig&&DB.dig.date===t?DB.dig:null,dl=dg?digLeft(dg):DIG_BASE+(DB.streaks.puzzle.last===t?1:0);
+  const od=DB.odds&&DB.odds.date===t?DB.odds:null;
+  const digDone=dg&&dl<=0,oddsDone=od&&od.done;
+  root.append(h('div',{class:'cards'},
+    h('button',{class:'gcard'+(digDone?' done':''),style:{'--ac':'#b7791f'},onclick:()=>nav({r:'dig'})},
+      h('div',{class:'em'},'⛏️'),h('div',{class:'nm'},'Daily Dig'),
+      h('div',{class:'sb'},digDone?'Done · '+bankedVal(dg)+' pts':dl+' digs left'),digDone?null:h('span',{class:'tag'},'NEW')),
+    h('button',{class:'gcard'+(oddsDone?' done':''),style:{'--ac':'#d9480f'},onclick:()=>nav({r:'odds'})},
+      h('div',{class:'em'},'🎲'),h('div',{class:'nm'},'Daily Odds'),
+      h('div',{class:'sb'},oddsDone?'Done · '+od.score+' pts':od?'Roll '+(od.i+1)+'/10':'10 rolls waiting'),oddsDone?null:h('span',{class:'tag'},'NEW'))
+  ));
+  root.append(h('div',{class:'sec'},'Puzzles'));
+  const cards=h('div',{class:'cards'});
+  for(const g of GAMES){
+    const wins=Object.values(DB.stats).filter(s=>s.id===g.id).reduce((a,s)=>a+s.wins,0);
+    const res=DB.resume[g.id];
+    cards.append(h('button',{class:'gcard',style:{'--ac':g.color},onclick:()=>nav({r:'setup',g:g.id})},
+      h('div',{class:'em'},g.emoji),h('div',{class:'nm'},g.name),
+      h('div',{class:'sb'},wins?wins+' solved':g.desc),res?h('span',{class:'tag'},'RESUME'):null));
+  }
+  root.append(cards);
+  root.append(h('div',{class:'row',style:{marginTop:'18px'}},
+    h('button',{class:'btn ghost',onclick:()=>nav({r:'stats'})},'📊 Stats'),
+    h('button',{class:'btn ghost',onclick:()=>nav({r:'book'})},'📖 Book'),
+    h('button',{class:'btn ghost',onclick:()=>nav({r:'settings'})},'⚙️ Settings')
+  ));
+  return root;
+}
+
+/* ---------- Setup ---------- */
+function bestText(g,o){
+  const s=statOf(g.id,o);if(!s||s.best==null)return 'No wins yet';
+  return(g.metric==='score'?'Best score '+s.best+' (best time '+fmtTime(s.bestTime)+')':'Best '+fmtTime(s.best))+' · '+s.wins+' solved / '+s.plays+' started';
+}
+function renderSetup(g){
+  const last=(DB.settings.last||{})[g.id];
+  let o=Object.assign({},g.def,last||{});
+  const root=h('div',{style:{'--ac':g.color}});
+  const body=h('div');
+  function draw(){
+    body.replaceChildren();
+    if(g.sizes){
+      body.append(h('div',{class:'lbl'},'Size'),h('div',{class:'chips'},g.sizes.map(s=>h('button',{class:'chip'+(o.size===s?' on':''),onclick:()=>{o.size=s;draw()}},s+'×'+s))));
+    }
+    if(g.diffs){
+      body.append(h('div',{class:'lbl'},'Difficulty'),h('div',{class:'chips'},g.diffs.map(d=>h('button',{class:'chip'+(o.diff===d?' on':''),onclick:()=>{o.diff=d;draw()}},cap(d)))));
+    }
+    body.append(h('div',{class:'box',style:{marginTop:'18px'}},h('b',null,'🏅 '),bestText(g,o)));
+    const res=DB.resume[g.id];
+    body.append(h('button',{class:'btn',style:{width:'100%'},onclick:()=>{
+      DB.settings.last=Object.assign(DB.settings.last||{},{[g.id]:Object.assign({},o)});saveDB();
+      nav({r:'play',g:g.id,o:Object.assign({},o)});
+    }},'Start new puzzle'));
+    if(res)body.append(h('button',{class:'btn ghost',style:{width:'100%',marginTop:'10px'},onclick:()=>nav({r:'play',g:g.id})},'Resume · '+vlabel(res.opts)+' · '+fmtTime(res.state.t+res.state.pen)));
+    const recent=DB.history.filter(x=>x.id===g.id&&x.size===String(o.size||'')&&x.diff===(o.diff||'')).slice(0,5);
+    if(recent.length){
+      body.append(h('div',{class:'lbl'},'Recent results'));
+      body.append(h('table',null,recent.map(x=>h('tr',null,h('td',null,x.date),h('td',{class:'r'},g.metric==='score'?'Score '+x.metric:fmtTime(x.metric))))));
+    }
+  }
+  root.append(topBar(g.emoji+' '+g.name,g.desc),h('div',{class:'box rules'},g.rules),body);
+  draw();return root;
+}
+
+/* ---------- Play shell ---------- */
+const ACT_LABEL={undo:'↶ Undo',hint:'💡 Hint',check:'✓ Check',reset:'⟲ Reset'};
+function startGame(g,o,useResume){
+  const v=$('#view');
+  v.replaceChildren(h('div',{class:'loading'},'Generating puzzle…'));
+  setTimeout(()=>{
+    let st,opts=o;
+    const res=useResume?DB.resume[g.id]:null;
+    if(res){opts=res.opts;st=res.state}
+    else{
+      st=g.gen(opts);
+      if(!st){v.replaceChildren(h('div',{class:'box'},'Could not generate a puzzle. Try again.',h('button',{class:'btn',onclick:()=>startGame(g,o,false)},'Retry')));return}
+      Object.assign(st,{t:0,pen:0,hints:0,done:false});recordPlay(g,opts);
+    }
+    buildPlay(g,opts,st);
+  },30);
+}
+function buildPlay(g,opts,st){
+  const v=$('#view');
+  const A=ACTIVE={g,opts,st,paused:false,last:performance.now(),iv:0,api:null,inst:null};
+  const timerEl=h('div',{class:'timer'},'0:00');
+  const pauseBtn=h('button',{class:'iconbtn','aria-label':'Pause',onclick:()=>setPause(!A.paused)},'⏸');
+  const root=h('div'),cover=h('div',{class:'cover'},'Paused — tap to resume');
+  cover.style.display='none';cover.onclick=()=>setPause(false);
+  const bwrap=h('div',{class:'bwrap'},root,cover);
+  const acts=h('div',{class:'acts'});
+  function tick(){
+    const now=performance.now();
+    if(!A.paused&&!st.done)st.t+=(now-A.last)/1000;
+    A.last=now;timerEl.textContent=fmtTime(st.t+st.pen);
+  }
+  function setPause(p){
+    if(st.done)return;tick();A.paused=p;cover.style.display=p?'flex':'none';pauseBtn.textContent=p?'▶':'⏸';
+    acts.querySelectorAll('button').forEach(b=>b.disabled=p);
+    if(p)A.api.save();
+  }
+  A.setPause=setPause;
+  const api=A.api={
+    save(){DB.resume[g.id]={opts,state:st};saveDB()},
+    paused:()=>A.paused,buzz,
+    useHint(){st.hints++;st.pen+=HINT_PENALTY;tick();toast('Hint used (+'+HINT_PENALTY+'s)',1200)},
+    win(extra={}){
+      if(st.done)return;tick();st.done=true;
+      const total=Math.round(st.t+st.pen),metric=total+(extra.add||0);
+      const r=recordResult(g,opts,{time:total,metric,moves:extra.moves,hints:st.hints});
+      delete DB.resume[g.id];saveDB();buzz([40,40,80]);
+      setTimeout(()=>showWin(g,opts,total,metric,extra,r),450);
+    }
+  };
+  v.replaceChildren(h('div',{style:{'--ac':g.color}},
+    h('div',{class:'ptop'},
+      h('button',{class:'iconbtn','aria-label':'Back',onclick:back},'‹'),
+      h('div',{class:'grow',style:{flex:1,minWidth:0}},h('div',{class:'ttl'},g.name),h('div',{class:'sub'},vlabel(opts))),
+      timerEl,pauseBtn),
+    bwrap,acts));
+  A.inst=g.mount(root,st,api);
+  for(const name of g.actions)acts.append(h('button',{onclick:()=>{if(!A.paused&&!st.done)A.inst.act[name]()}},name==='hint'?'💡 Hint (+'+HINT_PENALTY+'s)':ACT_LABEL[name]));
+  A.iv=setInterval(()=>{tick();if(!A.paused&&!st.done&&Math.floor(st.t)%10===0&&Math.floor(st.t)!==A.lastSave){A.lastSave=Math.floor(st.t);api.save()}},250);
+  tick();
+  if(st.done)return;
+  if(DB.resume[g.id]===undefined)api.save();
+}
+function showWin(g,opts,total,metric,extra,r){
+  if(!ACTIVE||ACTIVE.st.done!==true)return;
+  const score=g.metric==='score';
+  const m=h('div',{class:'modal'},h('div',{class:'mb'},
+    h('div',{class:'big'},'🎉'),h('h2',null,'Solved!'),
+    h('div',{class:'stat'},score?'Score '+Math.round(metric):fmtTime(total)),
+    score?h('div',{class:'sub'},fmtTime(total)+' + '+extra.moves+' moves'):null,
+    r.isBest?h('div',{class:'badge'},'🏆 New best!'):h('div',{class:'sub'},'Best: '+(score?statOf(g.id,opts).best:fmtTime(statOf(g.id,opts).best))),
+    ACTIVE.st.hints?h('div',{class:'sub'},ACTIVE.st.hints+' hint'+(ACTIVE.st.hints>1?'s':'')+' used (included in time)'):null,
+    h('div',{class:'sub',style:{marginTop:'6px'}},'⛏️ Bonus dig earned for today’s Daily Dig'),
+    h('div',{class:'row'},
+      h('button',{class:'btn ghost',onclick:()=>{m.remove();goHome()}},'Home'),
+      h('button',{class:'btn',onclick:()=>{m.remove();startGame(g,opts,false)}},'Play again'))
+  ));
+  document.body.append(m);
+}
+
+/* ---------- Stats ---------- */
+function gameName(id){const g=GAMES.find(x=>x.id===id);return g?g.emoji+' '+g.name:id==='dig'?'⛏️ Dig':id==='odds'?'🎲 Odds':id}
+function renderStats(filter){
+  const root=h('div');
+  root.append(topBar('📊 Stats'));
+  const sd=DB.streaks.daily,sp=DB.streaks.puzzle;
+  root.append(h('div',{class:'pills'},
+    h('span',{class:'pill'},'🔥 Daily ',h('b',null,String(streakNow('daily'))),' (best '+Math.max(sd.best||0,streakNow('daily'))+')'),
+    h('span',{class:'pill'},'🧠 Puzzle ',h('b',null,String(streakNow('puzzle'))),' (best '+Math.max(sp.best||0,streakNow('puzzle'))+')')));
+  root.append(h('div',{class:'sec'},'Personal bests'));
+  const rows=Object.values(DB.stats).filter(s=>s.plays>0).sort((a,b)=>GAMES.findIndex(g=>g.id===a.id)-GAMES.findIndex(g=>g.id===b.id)||(+a.size-+b.size)||String(a.diff).localeCompare(b.diff));
+  if(!rows.length)root.append(h('div',{class:'box sub'},'Solve a puzzle and your bests show up here.'));
+  else{
+    const tb=h('table');tb.append(h('tr',null,h('th',null,'Variant'),h('th',{class:'r'},'Best'),h('th',{class:'r'},'Won')));
+    let lastId='';
+    for(const s of rows){
+      const g=GAMES.find(x=>x.id===s.id);
+      if(s.id!==lastId){lastId=s.id;tb.append(h('tr',null,h('td',{colspan:3,style:{fontWeight:'800',paddingTop:'12px'}},g?g.emoji+' '+g.name:s.id)))}
+      tb.append(h('tr',null,h('td',null,vlabel(s)),h('td',{class:'r'},s.best==null?'–':(g&&g.metric==='score'?s.best+' pts':fmtTime(s.best))),h('td',{class:'r'},s.wins+'/'+s.plays)));
+    }
+    root.append(h('div',{class:'box'},tb));
+  }
+  const digs=DB.history.filter(x=>x.id==='dig'),odds=DB.history.filter(x=>x.id==='odds');
+  root.append(h('div',{class:'sec'},'Daily games'));
+  root.append(h('div',{class:'box'},h('table',null,
+    h('tr',null,h('th',null,'Game'),h('th',{class:'r'},'Days'),h('th',{class:'r'},'Best'),h('th',{class:'r'},'Avg')),
+    [['⛏️ Daily Dig',digs],['🎲 Daily Odds',odds]].map(([n,a])=>h('tr',null,h('td',null,n),h('td',{class:'r'},String(a.length)),h('td',{class:'r'},a.length?String(Math.max(...a.map(x=>x.score))):'–'),h('td',{class:'r'},a.length?String(Math.round(a.reduce((s,x)=>s+x.score,0)/a.length)):'–')))
+  )));
+  root.append(h('div',{class:'sec'},'History'));
+  const sel=h('select',{onchange:e=>{hist.replaceChildren(...histRows(e.target.value))}},
+    h('option',{value:'all'},'All games'),GAMES.map(g=>h('option',{value:g.id},g.emoji+' '+g.name)),h('option',{value:'dig'},'⛏️ Daily Dig'),h('option',{value:'odds'},'🎲 Daily Odds'));
+  const hist=h('div');
+  function histRows(f){
+    const list=DB.history.filter(x=>f==='all'||x.id===f).slice(0,50);
+    if(!list.length)return[h('div',{class:'sub',style:{padding:'10px 2px'}},'Nothing yet.')];
+    return[h('table',null,list.map(x=>{
+      const g=GAMES.find(y=>y.id===x.id);
+      const res=g?(g.metric==='score'?x.metric+' pts':fmtTime(x.metric)):x.score+' pts';
+      return h('tr',null,h('td',null,gameName(x.id)),h('td',null,g?vlabel(x):''),h('td',{class:'r'},res),h('td',{class:'r sub'},x.date.slice(5)));
+    }))];
+  }
+  hist.append(...histRows('all'));
+  root.append(sel,h('div',{class:'box'},hist));
+  return root;
+}
+
+/* ---------- Settings / backup ---------- */
+function renderSettings(){
+  const root=h('div');
+  root.append(topBar('⚙️ Settings'));
+  const themeBox=h('div',{class:'chips'});
+  function drawTheme(){
+    themeBox.replaceChildren(...['auto','light','dark'].map(t=>h('button',{class:'chip'+(DB.settings.theme===t?' on':''),onclick:()=>{DB.settings.theme=t;saveDB();applyTheme();drawTheme()}},cap(t))));
+  }
+  drawTheme();
+  root.append(h('div',{class:'lbl'},'Theme'),themeBox);
+  const hap=h('button',{class:'chip'+(DB.settings.haptics?' on':''),onclick:()=>{DB.settings.haptics=!DB.settings.haptics;saveDB();hap.classList.toggle('on',DB.settings.haptics);hap.textContent='Vibration: '+(DB.settings.haptics?'on':'off')}},'Vibration: '+(DB.settings.haptics?'on':'off'));
+  root.append(h('div',{class:'lbl'},'Feedback'),hap);
+  root.append(h('div',{class:'lbl'},'Backup your scores'));
+  const ta=h('textarea',{placeholder:'Paste a backup here to import it'});
+  root.append(h('div',{class:'box'},
+    h('div',{class:'rules'},'Scores live only on this device and browser. Export a backup now and then, especially before clearing browser data.'),
+    h('div',{class:'row',style:{marginTop:'10px'}},
+      h('button',{class:'btn',onclick:exportFile},'Export file'),
+      h('button',{class:'btn ghost',onclick:()=>{const t=JSON.stringify(DB);if(navigator.clipboard)navigator.clipboard.writeText(t).then(()=>toast('Backup copied'),()=>{ta.value=t;toast('Copy it from the box below',3000)});else{ta.value=t;toast('Copy it from the box below',3000)}}},'Copy text')),
+    h('div',{style:{marginTop:'12px'}},ta),
+    h('div',{class:'row',style:{marginTop:'10px'}},
+      h('button',{class:'btn ghost',onclick:()=>importText(ta.value)},'Import pasted'),
+      h('label',{class:'btn ghost',style:{textAlign:'center'}},'Import file',h('input',{type:'file',accept:'.json,application/json',style:{display:'none'},onchange:e=>{const f=e.target.files[0];if(f)f.text().then(importText)}})))
+  ));
+  root.append(h('div',{class:'lbl'},'Danger zone'));
+  root.append(h('button',{class:'btn ghost',style:{width:'100%',color:'var(--bad)'},onclick:()=>{if(confirm('Delete ALL scores, history and collection?')&&confirm('Really delete everything? This cannot be undone.')){mergeDB(blankDB());saveDB();applyTheme();toast('Everything cleared');goHome()}}},'Reset all data'));
+  root.append(h('div',{class:'sub',style:{textAlign:'center',marginTop:'18px'}},'Puzzle Box · works offline once installed'));
+  return root;
+}
+function exportFile(){
+  try{
+    const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'});
+    const a=h('a',{href:URL.createObjectURL(blob),download:'puzzlebox-backup-'+today()+'.json'});
+    document.body.append(a);a.click();a.remove();toast('Backup saved');
+  }catch(e){toast('Export failed — use Copy text')}
+}
+function importText(t){
+  try{
+    const o=JSON.parse(t);
+    if(!o||typeof o!=='object'||!o.stats||!Array.isArray(o.history))throw 0;
+    if(!confirm('Replace everything on this device with the backup?'))return;
+    mergeDB(o);saveDB();applyTheme();toast('Backup imported');goHome();
+  }catch(e){toast('That does not look like a Puzzle Box backup',2500)}
+}
+
+/* ---------- Boot ---------- */
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&ACTIVE&&!ACTIVE.paused&&!ACTIVE.st.done)ACTIVE.setPause(true)});
+window.addEventListener('pagehide',()=>{if(ACTIVE&&!ACTIVE.st.done)ACTIVE.api.save()});
+window.addEventListener('popstate',e=>show(e.state&&e.state.r?e.state:{r:'home'}));
+function boot(){
+  loadDB();applyTheme();
+  const s=history.state&&history.state.r?history.state:{r:'home'};
+  if(!history.state)history.replaceState(s,'');
+  show(s.r==='play'?{r:'home'}:s);
+  if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+boot();
+
+</script>
+</body></html>
